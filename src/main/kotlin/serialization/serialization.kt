@@ -6,7 +6,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
 
 @Serializable
-data class Data(val a: Int, val b: Int, val c: String)
+data class Data(val a: Int, val b: Int, val c: String = "")
 
 fun main() {
     val json = Json(JsonConfiguration.Stable.copy(ignoreUnknownKeys = true))
@@ -24,6 +24,9 @@ fun main() {
     // do not forget to specify 'ignoreUnknownKeys=true'
     val obj1 = json.parse(Data.serializer(), """{"a":3, "b":141, "c":"hoge", "d":414, "e":0}""")
     println(obj1)
+
+    val obj2 = json.parse(Data.serializer(), """{"a":3, "b":141}""")
+    println(obj2)
 
     val list = json.parse(Data.serializer().list, """[{"a":1,"b":2,"c":"3"},{"a":4,"b":5,"c":"6"}]""")
     println("$list, ${list.javaClass.simpleName}")
