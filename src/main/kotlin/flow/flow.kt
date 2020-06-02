@@ -32,6 +32,7 @@ suspend fun combineSample(one: Flow<Int>, two: Flow<String>) {
 
     // Collect all pairs of the latest values.
     // The value updated faster than another one's value is ignored
+    // どれかが更新されただけで処理が走るが、どれも1回ずつなどの場合は問題ない
     one.combine(two) { a, b -> "$a$b" }.collect {
         println("$it at ${System.currentTimeMillis() - startTime} ms from start")
     }
@@ -40,9 +41,7 @@ suspend fun combineSample(one: Flow<Int>, two: Flow<String>) {
 suspend fun combineMore(one: Flow<Int>, two: Flow<String>) {
     val three = (1..5).asFlow().onEach { delay(1000L) }
 
-    one.combine(two) { a, b ->
-        "$a$b"
-    }.combine(three) { c, d ->
-        "$c - $d"
-    }.collect { println(it) }
+    combine(one, two, three) { one, two, three ->
+        "$one - $two - $three"
+    }.collect { println(it)}
 }
