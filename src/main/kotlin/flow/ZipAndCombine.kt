@@ -4,17 +4,23 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.runBlocking
 
-fun main() = runBlocking {
-    // two flows
-    val nums = (1..3).asFlow().onEach { delay(300L) }
-    val strs = flowOf("a", "b", "c", "d").onEach { delay(800L) }
+fun main() {
+    runBlocking {
+        // two flows
+        val nums = (1..3).asFlow().onEach { delay(300L) }
+        val strs = flowOf("a", "b", "c", "d").onEach { delay(800L) }
 
-    println("--zip-")
-    zipSample(nums, strs)
+        println("--zip-")
+        zipSample(nums, strs)
 
-    println("--combine")
-    combineSample(nums, strs)
-    combineMore(nums, strs)
+        println("--combine")
+        combineSample(nums, strs)
+        combineMore(nums, strs)
+
+        println("multiEmitSequentially")
+        multiEmitSequentially(nums, strs).collect { println(it) }
+    }
+
 }
 
 suspend fun zipSample(one: Flow<Int>, two: Flow<String>) {
@@ -43,5 +49,13 @@ suspend fun combineMore(one: Flow<Int>, two: Flow<String>) {
 
     combine(one, two, three) { one, two, three ->
         "$one - $two - $three"
-    }.collect { println(it)}
+    }.collect { println(it) }
+}
+
+suspend fun multiEmitSequentially(one: Flow<Int>, two: Flow<String>): Flow<String> {
+    return flow {
+        emit("1")
+        emitAll(two)
+        emitAll(one.map { it.toString() })
+    }
 }
