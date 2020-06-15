@@ -5,15 +5,26 @@ import java.lang.Exception
 import java.lang.RuntimeException
 
 fun main () {
-    asyncExceptionSample()
-    try {
-        asyncExceptionSample_failed()
-    } catch (e: Exception) {
-        println("handled")
+    // async
+    runBlocking {
+        asyncExceptionSampleWithSupervisorScopeOk()
+//        asyncExceptionSampleWithCoroutineScopeFailed() // crash
+        withExceptionHandler { asyncExceptionSampleWithCoroutineScopeFailed() } // OK
+    }
+
+    // launch
+    runBlocking {
+        withExceptionHandler { launchExceptionSampleWithCoroutineScopeOk() }
+        withExceptionHandler { launchExceptionSampleWithSupervisorScopeOk() }
+        withExceptionHandler { launchExceptionSampleWithSupervisorScopeFailed() } // crash
     }
 }
 
-fun asyncExceptionSample() = runBlocking {
+/**
+ * async
+ */
+
+suspend fun asyncExceptionSampleWithSupervisorScopeOk() {
     supervisorScope {
         val deferred = async { throw RuntimeException() }
         try {
@@ -24,7 +35,7 @@ fun asyncExceptionSample() = runBlocking {
     }
 }
 
-fun asyncExceptionSample_failed() = runBlocking {
+suspend fun asyncExceptionSampleWithCoroutineScopeFailed() {
     coroutineScope {
         val deferred = async { throw RuntimeException() }
         try {
@@ -34,5 +45,42 @@ fun asyncExceptionSample_failed() = runBlocking {
             // but propagated up to the scope
             println("handle error")
         }
+    }
+}
+
+/**
+ * launch
+ */
+
+suspend fun launchExceptionSampleWithSupervisorScopeFailed() {
+    supervisorScope {
+        launch { throw Exception() }
+    }
+}
+
+// when use supervisorScope, you must handle in launch immediately.
+suspend fun launchExceptionSampleWithSupervisorScopeOk() {
+    supervisorScope {
+        launch {
+            try {
+                throw Exception()
+            } catch (e: Exception) {
+                println("inner handled")
+            }
+        }
+    }
+}
+
+suspend fun launchExceptionSampleWithCoroutineScopeOk() {
+    coroutineScope {
+        launch { throw Exception() }
+    }
+}
+
+suspend fun withExceptionHandler(block: suspend() -> Unit) {
+    try {
+        block()
+    } catch (e: Exception) {
+        println("handled.")
     }
 }
